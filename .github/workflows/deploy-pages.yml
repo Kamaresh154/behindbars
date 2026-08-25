@@ -34,7 +34,18 @@ jobs:
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PUBLIC_BASE_PATH: /behindbars
 
+      - name: Fix public asset URLs in exported HTML
+        run: |
+          find ./out -type f \( -name '*.html' -o -name '*.txt' \) -print0 | xargs -0 sed -i \
+            -e 's#src="/images/#src="/behindbars/images/#g' \
+            -e 's#srcset="/images/#srcset="/behindbars/images/#g' \
+            -e 's#url(/images/#url(/behindbars/images/#g' \
+            -e 's#url("/images/#url("/behindbars/images/#g' \
+            -e "s#url('/images/#url('/behindbars/images/#g"
+
+  
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
