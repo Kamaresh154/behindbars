@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     ],
   },
   trailingSlash: true,
+  turbopack: {},
   webpack(config) {
     // Allow importing GLSL shader files
     config.module.rules.push({
