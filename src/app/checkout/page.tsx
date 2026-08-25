@@ -64,54 +64,15 @@ export default function CheckoutPage() {
   const taxAmount  = Math.round((subtotal() - discountAmount) * 0.18);
   const total      = subtotal() - discountAmount + shipping + taxAmount;
 
-  const onSubmit = async (data: AddressFormData) => {
+  const onSubmit = async () => {
     setIsLoading(true);
     try {
-      // 1. Create Razorpay order server-side
-      const res = await fetch("/api/razorpay/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: total }),
-      });
-      const { orderId, keyId } = await res.json();
-
-      // 2. Load Razorpay Checkout SDK
-      await loadRazorpayScript();
-
-      // 3. Open Razorpay Checkout
-      const rzp = new window.Razorpay({
-        key:        keyId,
-        amount:     total * 100,
-        currency:   "INR",
-        name:       "BehindBars Fabrics",
-        description:"Premium Men's Fashion",
-        order_id:   orderId,
-        prefill: {
-          name:    data.name,
-          email:   data.email,
-          contact: data.phone,
-        },
-        theme: { color: "#C9A84C" },
-        handler: async (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) => {
-          // 4. Verify payment server-side
-          const verifyRes = await fetch("/api/razorpay/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...response, orderId }),
-          });
-          if (verifyRes.ok) {
-            clearCart();
-            setStep("done");
-          }
-        },
-      });
-      rzp.open();
+      throw new Error(
+        "Checkout payments require a server backend and are not available on this GitHub Pages static deployment."
+      );
     } catch (err) {
       console.error("Checkout error:", err);
+      alert("Online checkout is not available on the GitHub Pages demo yet. Please contact BehindBars to place an order.");
     } finally {
       setIsLoading(false);
     }
@@ -144,27 +105,23 @@ export default function CheckoutPage() {
         <h1 className="font-display text-4xl text-white mb-10">Checkout</h1>
 
         <div className="grid lg:grid-cols-3 gap-10">
-          {/* LEFT — Address Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <h2 className="font-display text-xl text-white mb-2">Delivery Address</h2>
 
-              {/* Name + Phone */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Full Name" error={errors.name?.message}>
-                  <input {...register("name")} placeholder="Manigandan" className={input} />
+                  <input {...register("name")} placeholder="Your full name" className={input} />
                 </Field>
                 <Field label="Mobile Number" error={errors.phone?.message}>
                   <input {...register("phone")} placeholder="9876543210" maxLength={10} className={input} />
                 </Field>
               </div>
 
-              {/* Email */}
               <Field label="Email Address" error={errors.email?.message}>
                 <input {...register("email")} type="email" placeholder="you@example.com" className={input} />
               </Field>
 
-              {/* Address */}
               <Field label="Address Line 1" error={errors.line1?.message}>
                 <input {...register("line1")} placeholder="House / Flat / Street" className={input} />
               </Field>
@@ -172,7 +129,6 @@ export default function CheckoutPage() {
                 <input {...register("line2")} placeholder="Landmark, Area" className={input} />
               </Field>
 
-              {/* City + State + PIN */}
               <div className="grid sm:grid-cols-3 gap-4">
                 <Field label="City" error={errors.city?.message}>
                   <input {...register("city")} placeholder="Chennai" className={input} />
@@ -201,7 +157,6 @@ export default function CheckoutPage() {
                 </Field>
               </div>
 
-              {/* GST number (optional) */}
               <Field label="GST Number (Optional)">
                 <input {...register("gst")} placeholder="22AAAAA0000A1Z5" className={input} />
               </Field>
@@ -215,16 +170,14 @@ export default function CheckoutPage() {
               </button>
 
               <p className="text-white/25 text-xs text-center">
-                🔒 Secured by Razorpay · PCI-DSS Compliant · No card data stored on our servers
+                Online payment is disabled on the GitHub Pages demo because secure Razorpay order creation requires a server.
               </p>
             </form>
           </div>
 
-          {/* RIGHT — Order Summary */}
           <div className="bg-charcoal rounded-2xl p-6 space-y-4 h-fit sticky top-24">
             <h2 className="font-display text-lg text-white">Order Summary</h2>
 
-            {/* Items */}
             <div className="space-y-3 max-h-48 overflow-y-auto">
               {items.map((item) => (
                 <div key={item.id} className="flex gap-3">
@@ -253,7 +206,6 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Payment methods */}
             <div className="pt-2 border-t border-white/5">
               <p className="text-white/30 text-[10px] tracking-wider mb-2">Accepted payments</p>
               <div className="flex gap-1.5 flex-wrap">
@@ -270,8 +222,6 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-// ── Helpers ──────────────────────────────────────────────
 
 const input = "w-full bg-smoke border border-white/10 text-white placeholder:text-white/30 px-4 py-2.5 text-sm outline-none focus:border-bar-gold transition-colors rounded-lg";
 
@@ -292,15 +242,4 @@ function Row({ label, value, accent, bold }: { label: string; value: string; acc
       <span className={accent ? "text-green-400" : bold ? "text-bar-gold font-bold" : "text-white/70"}>{value}</span>
     </div>
   );
-}
-
-async function loadRazorpayScript() {
-  if (document.querySelector("#razorpay-script")) return;
-  return new Promise<void>((resolve) => {
-    const s = document.createElement("script");
-    s.id  = "razorpay-script";
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve();
-    document.body.appendChild(s);
-  });
 }
