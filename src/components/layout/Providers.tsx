@@ -1,12 +1,8 @@
 "use client";
-// src/components/layout/Providers.tsx
-// Wraps the app with all required client-side providers.
-
 import { useEffect } from "react";
 import { useSceneStore } from "@/stores/useSceneStore";
 import { useLenisGSAP } from "@/hooks/useLenisGSAP";
-
-// Import GSAP config to register plugins globally
+import { GitHubPagesAssetFix } from "./GitHubPagesAssetFix";
 import "@/lib/gsapConfig";
 
 function MotionDetector() {
@@ -31,6 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <>
       <MotionDetector />
       <LenisProvider />
+      <GitHubPagesAssetFix />
       {children}
     </>
   );
