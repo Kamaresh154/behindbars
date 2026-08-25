@@ -739,15 +739,21 @@ async function main() {
   console.log("🌱 Starting BehindBars Fabrics seed...\n");
 
   // Clean existing data
+  await prisma.notification.deleteMany();
+  await prisma.shipment.deleteMany();
+  await prisma.refund.deleteMany();
+  await prisma.payment.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.cartItem.deleteMany();
   await prisma.cart.deleteMany();
+  await prisma.wishlistItem.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.productImage.deleteMany();
   await prisma.fabricMaterial.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
+  await prisma.coupon.deleteMany();
 
   let totalProducts = 0;
   let totalVariants = 0;
@@ -816,26 +822,45 @@ async function main() {
         },
       });
 
-      // Create variants (colour × size combinations)
+      // Create variants (colour × size combinations) - batched for MongoDB Atlas speed
+      const variantsData: any[] = [];
       for (const colour of pd.colours) {
         for (let si = 0; si < pd.sizes.length; si++) {
           const size = pd.sizes[si];
           const stock = pd.stockPerSize[si] ?? 0;
-          const sku = `BB-${pd.slug.slice(0, 8).toUpperCase()}-${colour.name.replace(/\s+/g, "").slice(0,4).toUpperCase()}-${size}`;
-
-          await prisma.productVariant.create({
-            data: {
-              productId: product.id,
-              colour: colour.name,
-              colourHex: colour.hex,
-              size,
-              sku,
-              stock: stock * 2, // × 2 for buffer
-              isActive: true,
-              weight: categoryName === "Footwear" ? 800 : categoryName === "Bags" ? 1200 : 350,
-            },
+          const sku = `BB-${pd.slug.toUpperCase()}-${colour.name.replace(/\s+/g, "").slice(0,4).toUpperCase()}-${size}`;
+          variantsData.push({
+            productId: product.id,
+            colour: colour.name,
+            colourHex: colour.hex,
+            size,
+            sku,
+            stock: stock * 2,
+            isActive: true,
+            weight: categoryName === "Footwear" ? 800 : categoryName === "Bags" ? 1200 : 350,
           });
           totalVariants++;
+        }
+      }
+      if (variantsData.length) {
+        // chunk to avoid MongoDB transaction limit + retry on P2034
+        const chunkSize = 30;
+        for (let c = 0; c < variantsData.length; c += chunkSize) {
+          const chunk = variantsData.slice(c, c + chunkSize);
+          let retries = 3;
+          while (true) {
+            try {
+              await prisma.productVariant.createMany({ data: chunk });
+              break;
+            } catch (e: any) {
+              if (e.code === 'P2034' && retries > 0) {
+                retries--;
+                await new Promise(r => setTimeout(r, 900));
+                continue;
+              }
+              throw e;
+            }
+          }
         }
       }
 
@@ -886,7 +911,6 @@ async function main() {
         isActive: true,
       },
     ],
-    skipDuplicates: true,
   });
 
   console.log(`\n✅ Seed complete!`);

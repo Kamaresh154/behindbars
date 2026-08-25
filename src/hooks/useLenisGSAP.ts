@@ -17,13 +17,13 @@ export function useLenisGSAP() {
     if (reducedMotion) return;
 
     const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, // smooth cubic ease-in-out
+      duration: 1.0, // even speed: reduced from 1.2 for consistent scrub
+      easing: (t) => t, // linear easing for even speed (was easeInOut cubic causing slow/fast)
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
+      wheelMultiplier: 0.85, // tuned for even distance per wheel tick
+      touchMultiplier: 1.4,
     });
 
     lenisRef.current = lenis;

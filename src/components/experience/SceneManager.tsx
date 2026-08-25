@@ -61,11 +61,11 @@ export function SceneManager() {
     const wp = CAMERA_WAYPOINTS[sceneIndex];
     const nextWp = CAMERA_WAYPOINTS[Math.min(sceneIndex + 1, SCENES.length - 1)];
 
-    // Smooth interpolation between waypoints
+    // Smooth interpolation between waypoints - even speed (was 0.04 lag causing slow/fast)
     const t = sceneLocal;
-    camera.position.x += ([wp[0] + (nextWp[0] - wp[0]) * t][0] - camera.position.x) * 0.04;
-    camera.position.y += ([wp[1] + (nextWp[1] - wp[1]) * t][0] - camera.position.y) * 0.04;
-    camera.position.z += ([wp[2] + (nextWp[2] - wp[2]) * t][0] - camera.position.z) * 0.04;
+    camera.position.x += ([wp[0] + (nextWp[0] - wp[0]) * t][0] - camera.position.x) * 0.08;
+    camera.position.y += ([wp[1] + (nextWp[1] - wp[1]) * t][0] - camera.position.y) * 0.08;
+    camera.position.z += ([wp[2] + (nextWp[2] - wp[2]) * t][0] - camera.position.z) * 0.08;
 
     // Camera look-at
     const lx = wp[3] + (nextWp[3] - wp[3]) * t;
