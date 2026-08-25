@@ -12,10 +12,14 @@ const schema = z.object({
   receipt:  z.string().optional(),
 });
 
-const razorpay = new Razorpay({
-  key_id:     process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+function getRazorpay() {
+  const key_id = process.env.RAZORPAY_KEY_ID;
+  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!key_id || !key_secret) {
+    throw new Error("Razorpay not configured - missing RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET");
+  }
+  return new Razorpay({ key_id, key_secret });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,6 +35,7 @@ export async function POST(req: NextRequest) {
 
     const { amount, currency } = parsed.data;
 
+    const razorpay = getRazorpay();
     const order = await razorpay.orders.create({
       amount:   Math.round(amount * 100), // paise
       currency,
