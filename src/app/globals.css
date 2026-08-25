@@ -1,0 +1,501 @@
+/* src/app/globals.css */
+@import "tailwindcss";
+
+@theme {
+  /* -- Colour palette -- */
+  --color-obsidian:   #0A0A0A;
+  --color-bar-gold:   #C9A84C;
+  --color-bar-gold-light: #E8C96A;
+  --color-parchment:  #F5F0E8;
+  --color-steel:      #6B7280;
+  --color-charcoal:   #1A1A1A;
+  --color-smoke:      #2A2A2A;
+
+  /* -- Typography -- */
+  --font-display: var(--font-display), "Cormorant Garamond", Georgia, serif;
+  --font-body:    var(--font-body), "Inter", system-ui, sans-serif;
+
+  /* -- Custom animations -- */
+  --animate-fabric-reveal: fabric-reveal 1.2s ease-out forwards;
+  --animate-shimmer:       shimmer 2s infinite linear;
+  --animate-fade-up:       fadeUp 0.7s ease-out forwards;
+  --animate-pulse-gold:    pulseGold 2s ease-in-out infinite;
+}
+
+/* -- Keyframes -- */
+@keyframes fabric-reveal {
+  from { clip-path: inset(0 100% 0 0); opacity: 0; }
+  to   { clip-path: inset(0 0% 0 0);   opacity: 1; }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position:  200% center; }
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes pulseGold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+  50%       { box-shadow: 0 0 0 12px rgba(201,168,76,0); }
+}
+
+/* -- Global base styles -- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-obsidian);
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* -- Typography utilities -- */
+.font-display   { font-family: var(--font-display); }
+.text-gold      { color: var(--color-bar-gold); }
+.bg-obsidian    { background-color: var(--color-obsidian); }
+
+/* -- Gold gradient text -- */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #C9A84C 0%, #E8C96A 50%, #C9A84C 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s infinite linear;
+}
+
+/* -- Scrollbar styling -- */
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: #0A0A0A; }
+::-webkit-scrollbar-thumb  { background: #C9A84C; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #E8C96A; }
+
+/* -- Focus visible -- */
+:focus-visible {
+  outline: 2px solid var(--color-bar-gold);
+  outline-offset: 2px;
+}
+
+/* -- Selection colour -- */
+::selection {
+  background-color: rgba(201, 168, 76, 0.3);
+  color: #fff;
+}
+
+/* -- Lenis smooth scroll -- */
+html.lenis { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+/* -- Container -- */
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+/* -- Reduced motion -- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* -- Brand-reveal collage -- */
+@keyframes oh2-cell-in {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.oh2-collage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 3px;
+  background: #0A0A0A;
+}
+
+.oh2-collage-cell {
+  position: relative;
+  overflow: hidden;
+  animation: oh2-cell-in 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.oh2-collage-img {
+  transition: transform 6s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.oh2-collage-cell:hover .oh2-collage-img {
+  transform: scale(1.06);
+}
+
+.oh2-collage-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10,10,10,0.75) 0%, transparent 55%);
+}
+
+.oh2-collage-label {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+
+/* =================================================================
+   OUTFIT HERO v2 -- Real photo scroll-driven costume hero
+   ================================================================= */
+
+/* -- Keyframes -- */
+@keyframes oh2-fade-in-scene {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes oh2-fade-out-scene {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes oh2-photo-ken {
+  from { transform: scale(1.055); }
+  to   { transform: scale(1.00);  }
+}
+@keyframes oh2-title-drop {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes oh2-fade-up {
+  from { transform: translateY(28px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes oh2-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes oh2-scroll-bob {
+  0%, 100% { transform: translateY(0) translateX(-50%);    opacity: 0.4; }
+  50%       { transform: translateY(12px) translateX(-50%); opacity: 0.9; }
+}
+@keyframes oh2-label-in {
+  from { transform: translateX(-20px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* Root */
+.oh2-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Scene layers — stacked, controlled by state classes */
+.oh2-scene {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+/* Active scene: fade in */
+.oh2-scene--active {
+  opacity: 1;
+  pointer-events: auto;
+  animation: oh2-fade-in-scene 0.65s cubic-bezier(0.4, 0, 0.2, 1) both;
+  z-index: 2;
+}
+/* Previous scene: fade out underneath */
+.oh2-scene--prev {
+  opacity: 0;
+  animation: oh2-fade-out-scene 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
+  z-index: 1;
+}
+/* All other scenes: hidden */
+.oh2-scene--hidden {
+  opacity: 0;
+  z-index: 0;
+}
+
+/* Real photo — Ken Burns only while active */
+.oh2-photo {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+.oh2-photo--active {
+  animation: oh2-photo-ken 7s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+
+/* Colour-grade overlays */
+.oh2-grade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.oh2-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: oh2-fade-in 1s ease both;
+}
+
+/* Left text panel */
+.oh2-text {
+  position: absolute;
+  left: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: min(440px, 42vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 10;
+}
+
+/* Counter */
+.oh2-counter {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 0.6rem;
+  animation: oh2-fade-in 0.5s ease 0.05s both;
+}
+.oh2-counter-of { color: rgba(255,255,255,0.15); }
+
+/* Title */
+.oh2-title-block { margin-bottom: 0.2rem; }
+.oh2-title-clip {
+  overflow: hidden;
+  line-height: 1;
+}
+.oh2-title-clip-d2 { margin-top: -0.05em; }
+.oh2-title-line {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(3.8rem, 7.5vw, 8rem);
+  font-weight: 300;
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+  animation: oh2-title-drop 0.75s cubic-bezier(0.22,1,0.36,1) both;
+}
+.oh2-title-italic {
+  font-style: italic;
+  animation-delay: 0.07s;
+}
+
+/* Tagline */
+.oh2-tagline {
+  font-family: var(--font-body);
+  font-size: clamp(0.7rem, 1.1vw, 0.88rem);
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 0.6rem;
+  animation: oh2-fade-up 0.6s cubic-bezier(0.22,1,0.36,1) 0.18s both;
+}
+
+/* CTA */
+.oh2-cta-wrap {
+  margin-top: 1.8rem;
+  animation: oh2-fade-up 0.55s cubic-bezier(0.22,1,0.36,1) 0.32s both;
+}
+.oh2-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 1.8rem;
+  border: 1px solid var(--cta-accent, #C9A84C);
+  color: var(--cta-accent, #C9A84C);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  transition: background 0.28s, color 0.28s, transform 0.2s, gap 0.28s;
+}
+.oh2-cta:hover {
+  background: var(--cta-accent, #C9A84C);
+  color: #0A0A0A;
+  gap: 1.1rem;
+}
+.oh2-arrow {
+  display: inline-block;
+  transition: transform 0.28s;
+}
+.oh2-cta:hover .oh2-arrow { transform: translateX(5px); }
+
+/* Progress dots */
+.oh2-dots {
+  position: absolute;
+  right: 1.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  z-index: 10;
+}
+.oh2-dot {
+  width: 2px;
+  height: 7px;
+  border-radius: 1px;
+  background: rgba(255,255,255,0.18);
+  transition: height 0.5s cubic-bezier(0.22,1,0.36,1), background 0.5s ease;
+}
+.oh2-dot-active { height: 30px; }
+.oh2-dot-done   { background: rgba(201,168,76,0.45); }
+
+/* Bottom label strip */
+.oh2-label-strip {
+  position: absolute;
+  bottom: 2.2rem;
+  left: 6%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 10;
+  animation: oh2-label-in 0.5s cubic-bezier(0.22,1,0.36,1) 0.4s both;
+}
+.oh2-label-line {
+  display: inline-block;
+  width: 28px;
+  height: 1px;
+  flex-shrink: 0;
+  transition: background 0.6s;
+}
+.oh2-label-text {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+/* Scroll hint */
+.oh2-scroll-hint {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 10;
+  animation: oh2-scroll-bob 2s ease-in-out infinite;
+}
+.oh2-scroll-bar {
+  width: 1px;
+  height: 36px;
+  background: rgba(255,255,255,0.28);
+}
+.oh2-scroll-txt {
+  font-family: var(--font-body);
+  font-size: 0.58rem;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+}
+
+/* Final CTA overlay */
+.oh2-final {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 10;
+  animation: oh2-fade-up 0.7s cubic-bezier(0.22,1,0.36,1) both;
+}
+.oh2-final-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 1.2rem;
+}
+.oh2-final-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 6.5vw, 6rem);
+  font-weight: 300;
+  line-height: 1.1;
+  color: #fff;
+  margin-bottom: 2.5rem;
+}
+.oh2-final-title em { font-style: italic; }
+.oh2-final-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+.oh2-final-btn-primary {
+  padding: 1rem 2.8rem;
+  background: var(--color-bar-gold);
+  color: #0A0A0A;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  transition: background 0.28s, transform 0.2s;
+}
+.oh2-final-btn-primary:hover {
+  background: var(--color-bar-gold-light);
+  transform: translateY(-2px);
+}
+.oh2-final-btn-outline {
+  padding: 1rem 2.8rem;
+  border: 1px solid rgba(255,255,255,0.28);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  transition: border-color 0.28s, color 0.28s, transform 0.2s;
+}
+.oh2-final-btn-outline:hover {
+  border-color: var(--color-bar-gold);
+  color: var(--color-bar-gold);
+  transform: translateY(-2px);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .oh2-text {
+    left: 4%;
+    max-width: 85vw;
+    bottom: 6rem;
+    top: auto;
+    transform: none;
+  }
+  .oh2-title-line { font-size: clamp(3rem, 11vw, 5rem); }
+  .oh2-dots { right: 1rem; }
+  .oh2-label-strip { display: none; }
+}

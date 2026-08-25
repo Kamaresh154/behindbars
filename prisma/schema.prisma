@@ -1,0 +1,429 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+//  AUTH & USERS
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  phone         String?   @unique
+  name          String?
+  role          Role      @default(CUSTOMER)
+  emailVerified DateTime?
+  phoneVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+  cart      Cart?
+  wishlist  WishlistItem[]
+  sessions  Session[]
+  otps      Otp[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  type      OtpType
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  name       String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  pincode    String
+  isDefault  Boolean @default(false)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders     Order[]
+}
+
+// ─────────────────────────────────────────────
+//  CATALOGUE
+// ─────────────────────────────────────────────
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  sortOrder   Int       @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+}
+
+model Product {
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  description     String?
+  categoryId      String
+  category        Category         @relation(fields: [categoryId], references: [id])
+  basePrice       Float
+  salePrice       Float?
+  currency        String           @default("INR")
+  gsm             Int?
+  width           Float?
+  composition     String?
+  weave           String?
+  careInstructions String?
+  isActive        Boolean          @default(true)
+  isFeatured      Boolean          @default(false)
+  metaTitle       String?
+  metaDescription String?
+  tags            String[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  variants      ProductVariant[]
+  images        ProductImage[]
+  fabricMaterial FabricMaterial?
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  wishlistItems WishlistItem[]
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  colour    String
+  colourHex String?
+  size      String
+  sku       String  @unique
+  stock     Int     @default(0)
+  price     Float?  // override base price if needed
+  weight    Float?  // grams
+  isActive  Boolean @default(true)
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+}
+
+model FabricMaterial {
+  id             String  @id @default(cuid())
+  productId      String  @unique
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  gltfUrl        String? // CDN path to .glb file
+  albedoMapUrl   String?
+  normalMapUrl   String?
+  roughnessMapUrl String?
+  sheenMapUrl    String?
+  opacityMapUrl  String?
+  hdriDaylight   String?
+  hdriIndoor     String?
+  hdriWarm       String?
+  thumbnailUrl   String?
+}
+
+// ─────────────────────────────────────────────
+//  CART
+// ─────────────────────────────────────────────
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?    @unique
+  sessionId String?    @unique // for guest carts
+  user      User?      @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  couponId  String?
+  coupon    Coupon?    @relation(fields: [couponId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product        @relation(fields: [productId], references: [id])
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Float          // supports cut-length decimals (e.g., 2.5 metres)
+  unitType  UnitType       @default(PIECE)
+  createdAt DateTime       @default(now())
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+// ─────────────────────────────────────────────
+//  ORDERS
+// ─────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  guestEmail      String?
+  guestPhone      String?
+  addressId       String?
+  address         Address?    @relation(fields: [addressId], references: [id])
+  shippingAddress Json        // snapshot at time of order
+  billingAddress  Json?
+  items           OrderItem[]
+  subtotal        Float
+  discountAmount  Float       @default(0)
+  shippingAmount  Float       @default(0)
+  taxAmount       Float       @default(0)
+  totalAmount     Float
+  couponCode      String?
+  currency        String      @default("INR")
+  status          OrderStatus @default(PENDING)
+  notes           String?
+  gstInvoiceNumber String?
+  payment         Payment?
+  shipment        Shipment?
+  notifications   Notification[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String         @id @default(cuid())
+  orderId     String
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product        @relation(fields: [productId], references: [id])
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+  productName String         // snapshot
+  colour      String
+  size        String
+  sku         String
+  quantity    Float
+  unitType    UnitType       @default(PIECE)
+  unitPrice   Float
+  totalPrice  Float
+}
+
+// ─────────────────────────────────────────────
+//  PAYMENT
+// ─────────────────────────────────────────────
+
+model Payment {
+  id                  String        @id @default(cuid())
+  orderId             String        @unique
+  order               Order         @relation(fields: [orderId], references: [id])
+  gateway             String        @default("razorpay")
+  gatewayOrderId      String?       @unique // Razorpay order_id
+  gatewayPaymentId    String?       @unique // Razorpay payment_id
+  gatewaySignature    String?
+  amount              Float
+  currency            String        @default("INR")
+  method              String?       // upi, card, netbanking, etc.
+  status              PaymentStatus @default(PENDING)
+  failureReason       String?
+  refunds             Refund[]
+  settledAt           DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model Refund {
+  id               String       @id @default(cuid())
+  paymentId        String
+  payment          Payment      @relation(fields: [paymentId], references: [id])
+  gatewayRefundId  String?      @unique
+  amount           Float
+  reason           String?
+  status           RefundStatus @default(PENDING)
+  processedAt      DateTime?
+  createdAt        DateTime     @default(now())
+}
+
+// ─────────────────────────────────────────────
+//  SHIPPING
+// ─────────────────────────────────────────────
+
+model Shipment {
+  id            String         @id @default(cuid())
+  orderId       String         @unique
+  order         Order          @relation(fields: [orderId], references: [id])
+  aggregator    String         @default("shiprocket")
+  awbNumber     String?
+  shipmentId    String?
+  courierId     Int?
+  courierName   String?
+  trackingUrl   String?
+  labelUrl      String?
+  status        ShipmentStatus @default(PENDING)
+  estimatedDate DateTime?
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+// ─────────────────────────────────────────────
+//  COUPONS
+// ─────────────────────────────────────────────
+
+model Coupon {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  description    String?
+  type           CouponType
+  value          Float      // percentage or flat amount
+  minOrderAmount Float?
+  maxDiscount    Float?
+  usageLimit     Int?
+  usedCount      Int        @default(0)
+  isActive       Boolean    @default(true)
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  carts          Cart[]
+  createdAt      DateTime   @default(now())
+}
+
+// ─────────────────────────────────────────────
+//  NOTIFICATIONS
+// ─────────────────────────────────────────────
+
+model Notification {
+  id        String             @id @default(cuid())
+  orderId   String
+  order     Order              @relation(fields: [orderId], references: [id])
+  type      NotificationType
+  channel   NotificationChannel
+  recipient String
+  status    NotificationStatus @default(PENDING)
+  sentAt    DateTime?
+  createdAt DateTime           @default(now())
+}
+
+// ─────────────────────────────────────────────
+//  ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum OtpType {
+  EMAIL
+  PHONE
+}
+
+enum UnitType {
+  PIECE
+  METRE
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+  RETURN_REQUESTED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum ShipmentStatus {
+  PENDING
+  BOOKED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FLAT
+  FREE_SHIPPING
+}
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_CONFIRMED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  REFUND_INITIATED
+  REFUND_COMPLETED
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
