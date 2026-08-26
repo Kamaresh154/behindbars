@@ -31,7 +31,6 @@ export function Real3DHeroScroll() {
     const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
-    // Uploaded frames are 848 × 478 (16:9). CSS object-fit: cover fills the viewport.
     canvas.width = 848;
     canvas.height = 478;
 
@@ -50,7 +49,6 @@ export function Real3DHeroScroll() {
       image.onload = () => {
         framesRef.current[index] = image;
         if (index === 0) drawFrame(0);
-        // If the current frame arrived after an idle load, paint it immediately.
         if (index === Math.round(currentFrameRef.current)) drawFrame(index);
       };
       image.onerror = () => { framesRef.current[index] = null; };
@@ -92,7 +90,10 @@ export function Real3DHeroScroll() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-      if (idleRef.current !== null && "cancelIdleCallback" in window) window.cancelIdleCallback(idleRef.current);
+      if (idleRef.current !== null) {
+        if ("cancelIdleCallback" in window) window.cancelIdleCallback(idleRef.current);
+        else window.clearTimeout(idleRef.current);
+      }
     };
   }, []);
 
@@ -109,13 +110,11 @@ export function Real3DHeroScroll() {
         <canvas ref={canvasRef} aria-label="BehindBars men's fashion 360 degree product sequence" className="absolute inset-0 h-screen w-screen object-cover" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_65%_48%,rgba(201,168,76,.14),transparent_30%),linear-gradient(90deg,rgba(0,0,0,.92)_0%,rgba(0,0,0,.56)_34%,rgba(0,0,0,.08)_72%,rgba(0,0,0,.22)_100%)]" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/80 to-transparent" />
-
         <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between border-b border-white/10 px-6 py-6 md:px-12">
           <Link href="/" className="text-[11px] tracking-[0.42em]">BEHINDBARS</Link>
           <nav className="hidden gap-9 text-[9px] uppercase tracking-[0.3em] text-white/55 md:flex"><Link href="/collections">Collection</Link><Link href="/collections/tops">Shirts</Link><Link href="/collections/bottoms">Trousers</Link></nav>
           <span className="text-[9px] uppercase tracking-[0.28em] text-white/40">Men&apos;s / 2026</span>
         </header>
-
         {copy.map((item) => (
           <div key={item.eyebrow} className="pointer-events-none absolute left-6 top-1/2 z-10 max-w-[520px] -translate-y-1/2 md:left-12 lg:left-[7vw]" style={textStyle(item.start, item.end)}>
             <p className="mb-6 text-[9px] uppercase tracking-[0.5em] text-[#C9A84C]">{item.eyebrow}</p>
@@ -124,7 +123,6 @@ export function Real3DHeroScroll() {
             <Link href="/collections" className="pointer-events-auto mt-8 inline-flex items-center gap-3 border border-[#C9A84C] px-6 py-4 text-[9px] uppercase tracking-[0.28em] text-[#C9A84C] transition-colors hover:bg-[#C9A84C] hover:text-black">Shop the look <span>→</span></Link>
           </div>
         ))}
-
         <div className="absolute bottom-8 left-6 z-20 flex items-center gap-4 text-[9px] uppercase tracking-[0.35em] text-white/40 md:left-12"><span className="h-px w-12 bg-white/30" /> Scroll / 360° sequence</div>
         <div className="absolute bottom-8 right-6 z-20 text-[9px] uppercase tracking-[0.35em] text-white/40 md:right-12">{String(Math.min(TOTAL_FRAMES, Math.max(1, Math.round(scrollPercent * TOTAL_FRAMES)))).padStart(3, "0")} / {TOTAL_FRAMES}</div>
         <div className="absolute right-4 top-1/2 z-20 h-32 w-px -translate-y-1/2 bg-white/10 md:right-6"><div className="h-full w-full origin-top bg-[#C9A84C]" style={{ transform: `scaleY(${scrollPercent})` }} /></div>
