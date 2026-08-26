@@ -1,0 +1,1 @@
+Real 3D prototype assets go in public/models. Required browser-ready files: sport-outfit.glb, black-white-pent-shirts.glb, formal-suit.glb, wesker-body.glb.
