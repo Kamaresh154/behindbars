@@ -15,13 +15,15 @@ const copy = [
 
 function frameUrl(frame: number) { return `${FRAME_DIR}/${FRAME_NAME(frame)}`; }
 
+type IdleHandle = ReturnType<typeof window.setTimeout> | number;
+
 export function Real3DHeroScroll() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const framesRef = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
   const currentFrameRef = useRef(0);
   const targetFrameRef = useRef(0);
   const rafRef = useRef<number | null>(null);
-  const idleRef = useRef<number | null>(null);
+  const idleRef = useRef<IdleHandle | null>(null);
   const lastDrawnRef = useRef(-1);
   const [scrollPercent, setScrollPercent] = useState(0);
 
@@ -56,15 +58,22 @@ export function Real3DHeroScroll() {
 
     loadFrame(0);
     let nextChunk = 1;
+    let idleScheduled = false;
     const loadChunk = () => {
+      idleScheduled = false;
       const end = Math.min(TOTAL_FRAMES, nextChunk + 10);
       for (let i = nextChunk; i < end; i += 1) loadFrame(i);
       nextChunk = end;
       if (nextChunk < TOTAL_FRAMES) scheduleIdle();
     };
     const scheduleIdle = () => {
-      if ("requestIdleCallback" in window) idleRef.current = window.requestIdleCallback(loadChunk, { timeout: 1200 });
-      else idleRef.current = window.setTimeout(loadChunk, 80) as unknown as number;
+      if (idleScheduled) return;
+      idleScheduled = true;
+      const win = window as Window & {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      };
+      if (typeof win.requestIdleCallback === "function") idleRef.current = win.requestIdleCallback(loadChunk, { timeout: 1200 });
+      else idleRef.current = window.setTimeout(loadChunk, 80);
     };
     scheduleIdle();
 
@@ -90,8 +99,11 @@ export function Real3DHeroScroll() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      const win = window as Window & {
+        cancelIdleCallback?: (id: number) => void;
+      };
       if (idleRef.current !== null) {
-        if ("cancelIdleCallback" in window) window.cancelIdleCallback(idleRef.current);
+        if (typeof win.cancelIdleCallback === "function" && typeof idleRef.current === "number") win.cancelIdleCallback(idleRef.current);
         else window.clearTimeout(idleRef.current);
       }
     };
